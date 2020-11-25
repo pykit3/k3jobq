@@ -1,36 +1,46 @@
 """
-package-name is utility to create sub process.
+k3jobq is a manager to create cuncurrent tasks.
+It processes a series of inputs with functions concurrently and
+return once all threads are done::
 
-Execute a shell script::
+    def add1(args):
+        return args + 1
 
-    import pk3proc
+    def printarg(args):
+        print(args)
 
-    # execute a shell script
-
-    returncode, out, err = pk3proc.shell_script('ls / | grep bin')
-    print returncode
-    print out
-    # output:
-    # > 0
-    # > bin
-    # > sbin
-
-Run a command::
-
-    # Unlike the above snippet, following statement does not start an sh process.
-    returncode, out, err = pk3proc.command('ls', 'a*', cwd='/usr/local')
-
+    k3jobq.run([0, 1, 2], [add1, printarg])
+    # > 1
+    # > 2
+    # > 3
 """
 
-# from .proc import CalledProcessError
-# from .proc import ProcError
+__version__ = "0.1.1"
+__name__ = "k3jobq"
 
-__version__ = "0.2.2"
-__name__ = "k3proc"
+from .jobq import (
+    EmptyRst,
+    Finish,
+    run,
+    stat,
+    JobManager,
 
-from .proc import foo
-from .proc import SomeError
+    JobWorkerError,
+    JobWorkerNotFound,
+)
 
-class Bar(object):
-    def foo(self):
-        pass
+from .works import (
+    limit_job_speed,
+)
+
+__all__ = [
+    'EmptyRst',
+    'Finish',
+    'run',
+    'stat',
+    'JobManager',
+
+    'JobWorkerError',
+    'JobWorkerNotFound',
+    'limit_job_speed',
+]

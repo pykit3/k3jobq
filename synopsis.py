@@ -1,42 +1,3 @@
-# k3jobq
-
-[![Build Status](https://travis-ci.com/pykit3/k3jobq.svg?branch=master)](https://travis-ci.com/pykit3/k3jobq)
-![Python package](https://github.com/pykit3/k3jobq/workflows/Python%20package/badge.svg)
-[![Documentation Status](https://readthedocs.org/projects/k3jobq/badge/?version=stable)](https://k3jobq.readthedocs.io/en/stable/?badge=stable)
-[![Package](https://img.shields.io/pypi/pyversions/k3jobq)](https://pypi.org/project/k3jobq)
-
-k3jobq processes a series of inputs with functions concurrently
-
-k3jobq is a component of [pykit3] project: a python3 toolkit set.
-
-
-k3jobq is a manager to create cuncurrent tasks.
-It processes a series of inputs with functions concurrently and
-return once all threads are done::
-
-    def add1(args):
-        return args + 1
-
-    def printarg(args):
-        print(args)
-
-    k3jobq.run([0, 1, 2], [add1, printarg])
-    # > 1
-    # > 2
-    # > 3
-
-
-
-# Install
-
-```
-pip install k3jobq
-```
-
-# Synopsis
-
-```python
-
 #!/usr/bin/env python
 
 import k3jobq
@@ -107,18 +68,3 @@ if __name__ == "__main__":
     # > 5
     # > 7
     # > 9
-
-```
-
-#   Author
-
-Zhang Yanpo (张炎泼) <drdr.xp@gmail.com>
-
-#   Copyright and License
-
-The MIT License (MIT)
-
-Copyright (c) 2015 Zhang Yanpo (张炎泼) <drdr.xp@gmail.com>
-
-
-[pykit3]: https://github.com/pykit3

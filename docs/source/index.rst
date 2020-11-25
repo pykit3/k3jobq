@@ -3,10 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-tmpl
+k3jobq
 ============
 
-.. automodule:: tmpl
+.. automodule:: k3jobq
 
 .. toctree::
    :maxdepth: 2
@@ -22,20 +22,24 @@ Documentation for the Code
 Exceptions
 ----------
 
-.. autoexception::  SomeError
+.. autoexception::  JobWorkerError
+.. autoexception::  JobWorkerNotFound
 
 
 Classes
 ----------
 
-.. autoclass::  Bar
+.. autoclass::  EmptyRst
+    :members:
+.. autoclass::  JobManager
     :members:
 
 
 Functions
 ---------
 
-.. autofunction::  foo
+.. autofunction::  run
+.. autofunction::  stat
 
 Indices and tables
 ==================

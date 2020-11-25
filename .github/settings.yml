@@ -1,6 +1,6 @@
 _extends: gh-config
 
 repository:
-  description: no desc
+  description: k3jobq processes a series of inputs with functions concurrently
   homepage: https://blog.openacid.com
-  topics: tag1, tag2
+  topics: concurrent, python, job, thread, queue

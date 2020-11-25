@@ -1,8 +1,8 @@
 import doctest
 
-import tmpl
+import k3jobq
 
 
 def load_tests(loader, tests, ignore):
-    tests.addTests(doctest.DocTestSuite(tmpl))
+    tests.addTests(doctest.DocTestSuite(k3jobq))
     return tests
