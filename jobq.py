@@ -16,7 +16,7 @@ class EmptyRst(object):
     By returning ``EmptyRst``, nothing is passed to next worker group::
 
         def worker_back_hole(args):
-            return jobq.EmptyRst
+            return k3jobq.EmptyRst
 
     If ``None`` is returned by a worker, ``None`` is passed to next worker.
     '''
@@ -240,7 +240,7 @@ class JobManager(object):
             print args
             return args
 
-        jm = jobq.JobManager([_echo])
+        jm = k3jobq.JobManager([_echo])
         for i in range(3):
             jm.put(i)
 
@@ -249,7 +249,7 @@ class JobManager(object):
     ``JobManager`` creates threads for worker functions, and wait for input to
     be fed with ``JobManager.put()``.
 
-    The arguments are the same as `jobq.run`.
+    The arguments are the same as `k3jobq.run`.
     '''
 
     def __init__(self, workers, queue_size=1024, probe=None, keep_order=False):
@@ -391,7 +391,7 @@ class JobManager(object):
         Wait for all worker to finish.
 
         Args:
-            timeout(float): is the same as `jobq.run`
+            timeout(float): is the same as `k3jobq.run`
 
         Returns:
             None
@@ -513,7 +513,7 @@ def run(input_it, workers, keep_order=False, timeout=None, probe=None):
 
 def stat(probe):
     '''
-    Get stat about a running or finished jobq session.
+    Get stat about a running or finished k3jobq session.
     stat returned is in a dictionary like::
 
         {

@@ -15,7 +15,7 @@ return once all threads are done::
     # > 3
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __name__ = "k3jobq"
 
 from .jobq import (
