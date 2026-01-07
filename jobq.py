@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class EmptyRst(object):
-    '''
+    """
     A worker function return this value to cancel a task.
     By returning ``EmptyRst``, nothing is passed to next worker group::
 
@@ -19,7 +19,7 @@ class EmptyRst(object):
             return k3jobq.EmptyRst
 
     If ``None`` is returned by a worker, ``None`` is passed to next worker.
-    '''
+    """
 
 
 class Finish(object):
@@ -35,12 +35,7 @@ class JobWorkerNotFound(JobWorkerError):
 
 
 class WorkerGroup(object):
-
-    def __init__(self, index, worker, n_thread,
-                 input_queue,
-                 dispatcher,
-                 probe, keep_order):
-
+    def __init__(self, index, worker, n_thread, input_queue, dispatcher, probe, keep_order):
         self.index = index
         self.worker = worker
         self.n_thread = n_thread
@@ -91,65 +86,56 @@ class WorkerGroup(object):
         if self.dispatcher is not None:
             self.dispatch_queues = []
             for i in range(self.n_thread):
-                self.dispatch_queues.append({
-                    'input': _make_q(),
-                    'output': _make_q(),
-                })
+                self.dispatch_queues.append(
+                    {
+                        "input": _make_q(),
+                        "output": _make_q(),
+                    }
+                )
             self.dispatcher_thread = start_thread(self._dispatch)
 
         self.add_worker_thread()
 
     def add_worker_thread(self):
-
         with self.worker_group_lock:
-
             if self.exiting:
-                logger.info('worker_group exiting.'
-                            ' Thread number change not allowed')
+                logger.info("worker_group exiting. Thread number change not allowed")
                 return
 
             s, e = self.running_index_range
 
             for i in range(s, e):
-
                 if i not in self.threads:
-
                     if self.keep_order:
-                        th = start_thread(self._exec_in_order,
-                                          self.input_queue, _make_q(), i)
+                        th = start_thread(self._exec_in_order, self.input_queue, _make_q(), i)
                     elif self.dispatcher is not None:
                         # for worker group with dispatcher, threads are added for the first time
                         assert s == 0
                         assert e == self.n_thread
-                        th = start_thread(self._exec,
-                                          self.dispatch_queues[i]['input'],
-                                          self.dispatch_queues[i]['output'],
-                                          i)
+                        th = start_thread(
+                            self._exec, self.dispatch_queues[i]["input"], self.dispatch_queues[i]["output"], i
+                        )
                     else:
-                        th = start_thread(self._exec,
-                                          self.input_queue, self.output_queue, i)
+                        th = start_thread(self._exec, self.input_queue, self.output_queue, i)
 
                     self.threads[i] = th
 
     def _exec(self, input_q, output_q, thread_index):
-
         while self.running:
-
             # If this thread is not in the running thread range, exit.
             if thread_index < self.running_index_range[0]:
-
                 with self.worker_group_lock:
                     del self.threads[thread_index]
 
-                logger.info('worker-thread {i} quit'.format(i=thread_index))
+                logger.info("worker-thread {i} quit".format(i=thread_index))
                 return
 
             args = input_q.get()
             if args is Finish:
                 return
 
-            with self.probe['probe_lock']:
-                self.probe['in'] += 1
+            with self.probe["probe_lock"]:
+                self.probe["in"] += 1
 
             try:
                 rst = self.worker(args)
@@ -158,8 +144,8 @@ class WorkerGroup(object):
                 continue
 
             finally:
-                with self.probe['probe_lock']:
-                    self.probe['out'] += 1
+                with self.probe["probe_lock"]:
+                    self.probe["out"] += 1
 
             # If rst is an iterator, it procures more than one args to next job.
             # In order to be accurate, we only count an iterator as one.
@@ -167,27 +153,22 @@ class WorkerGroup(object):
             _put_rst(output_q, rst)
 
     def _exec_in_order(self, input_q, output_q, thread_index):
-
         while self.running:
-
             if thread_index < self.running_index_range[0]:
-
                 with self.worker_group_lock:
                     del self.threads[thread_index]
 
-                logger.info('in-order worker-thread {i} quit'.format(
-                    i=thread_index))
+                logger.info("in-order worker-thread {i} quit".format(i=thread_index))
                 return
 
             with self.keep_order_lock:
-
                 args = input_q.get()
                 if args is Finish:
                     return
                 self.queue_of_output_q.put(output_q)
 
-            with self.probe['probe_lock']:
-                self.probe['in'] += 1
+            with self.probe["probe_lock"]:
+                self.probe["in"] += 1
 
             try:
                 rst = self.worker(args)
@@ -198,15 +179,13 @@ class WorkerGroup(object):
                 continue
 
             finally:
-                with self.probe['probe_lock']:
-                    self.probe['out'] += 1
+                with self.probe["probe_lock"]:
+                    self.probe["out"] += 1
 
             output_q.put(rst)
 
     def _coordinate(self):
-
         while self.running:
-
             outq = self.queue_of_output_q.get()
             if outq is Finish:
                 return
@@ -214,9 +193,7 @@ class WorkerGroup(object):
             _put_rst(self.output_queue, outq.get())
 
     def _dispatch(self):
-
         while self.running:
-
             args = self.input_queue.get()
             if args is Finish:
                 return
@@ -225,14 +202,14 @@ class WorkerGroup(object):
             n = n % self.n_thread
 
             queues = self.dispatch_queues[n]
-            inq, outq = queues['input'], queues['output']
+            inq, outq = queues["input"], queues["output"]
 
             self.queue_of_output_q.put(outq)
             inq.put(args)
 
 
 class JobManager(object):
-    '''
+    """
     JobManager is the internal impl of ``run`` and let user separate worker
     management and input management. E.g., ``run(range(3), [_echo])`` is same as::
 
@@ -250,10 +227,9 @@ class JobManager(object):
     be fed with ``JobManager.put()``.
 
     The arguments are the same as `k3jobq.run`.
-    '''
+    """
 
     def __init__(self, workers, queue_size=1024, probe=None, keep_order=False):
-
         if probe is None:
             probe = {}
 
@@ -264,22 +240,22 @@ class JobManager(object):
 
         self.worker_groups = []
 
-        self.probe.update({
-            'worker_groups': self.worker_groups,
-            'probe_lock': threading.RLock(),
-            'in': 0,
-            'out': 0,
-        })
+        self.probe.update(
+            {
+                "worker_groups": self.worker_groups,
+                "probe_lock": threading.RLock(),
+                "in": 0,
+                "out": 0,
+            }
+        )
 
         self.make_worker_groups()
 
     def make_worker_groups(self):
-
         inq = self.head_queue
 
         workers = self.workers + [_blackhole]
         for i, worker in enumerate(workers):
-
             if callable(worker):
                 worker = (worker, 1)
 
@@ -288,15 +264,13 @@ class JobManager(object):
 
             worker, n, dispatcher = worker
 
-            wg = WorkerGroup(i, worker, n, inq,
-                             dispatcher,
-                             self.probe, self.keep_order)
+            wg = WorkerGroup(i, worker, n, inq, dispatcher, self.probe, self.keep_order)
 
             self.worker_groups.append(wg)
             inq = wg.output_queue
 
     def set_thread_num(self, worker, n):
-        '''
+        """
         Change number of threads for a worker on the fly.
 
         If job manager has called ``JobManager.join()``.
@@ -326,13 +300,12 @@ class JobManager(object):
 
         Returns:
             None
-        '''
+        """
 
-        assert(n > 0)
-        assert(isinstance(n, int))
+        assert n > 0
+        assert isinstance(n, int)
 
         for wg in self.worker_groups:
-
             """
             In python2, `x = X(); x.meth is x.meth` results in a `False`.
             Every time to retrieve a method, python creates a new **bound** function.
@@ -346,13 +319,11 @@ class JobManager(object):
                 continue
 
             if wg.dispatcher is not None:
-                raise JobWorkerError('worker-group with dispatcher does not allow to change thread number')
+                raise JobWorkerError("worker-group with dispatcher does not allow to change thread number")
 
             with wg.worker_group_lock:
-
                 if wg.exiting:
-                    logger.info('worker group exiting.'
-                                ' Thread number change not allowed')
+                    logger.info("worker group exiting. Thread number change not allowed")
                     break
 
                 s, e = wg.running_index_range
@@ -368,26 +339,26 @@ class JobManager(object):
                 wg.running_index_range = [s, e]
                 wg.add_worker_thread()
 
-                logger.info('thread number is set to {n},'
-                            ' thread index: {idx},'
-                            ' running threads: {ths}'.format(
-                                n=n,
-                                idx=list(range(wg.running_index_range[0],
-                                               wg.running_index_range[1])),
-                                ths=sorted(wg.threads.keys())))
+                logger.info(
+                    "thread number is set to {n}, thread index: {idx}, running threads: {ths}".format(
+                        n=n,
+                        idx=list(range(wg.running_index_range[0], wg.running_index_range[1])),
+                        ths=sorted(wg.threads.keys()),
+                    )
+                )
                 break
 
         else:
             raise JobWorkerNotFound(worker)
 
     def put(self, elt):
-        '''
+        """
         Put anything as an input element.
-        '''
+        """
         self.head_queue.put(elt)
 
     def join(self, timeout=None):
-        '''
+        """
         Wait for all worker to finish.
 
         Args:
@@ -395,12 +366,11 @@ class JobManager(object):
 
         Returns:
             None
-        '''
+        """
 
         endtime = time.time() + (timeout or 86400 * 365)
 
         for wg in self.worker_groups:
-
             with wg.worker_group_lock:
                 # prevent adding or removing thread
                 wg.exiting = True
@@ -416,7 +386,7 @@ class JobManager(object):
                 wg.dispatcher_thread.join(endtime - time.time())
 
                 for qs in wg.dispatch_queues:
-                    qs['input'].put(Finish)
+                    qs["input"].put(Finish)
 
             for th in ths:
                 th.join(endtime - time.time())
@@ -433,7 +403,7 @@ class JobManager(object):
 
 
 def run(input_it, workers, keep_order=False, timeout=None, probe=None):
-    '''
+    """
     Process element in ``input`` one by one with functions in ``workers``.
 
     Args:
@@ -499,7 +469,7 @@ def run(input_it, workers, keep_order=False, timeout=None, probe=None):
 
     Returns:
         None
-    '''
+    """
 
     mgr = JobManager(workers, probe=probe, keep_order=keep_order)
 
@@ -512,7 +482,7 @@ def run(input_it, workers, keep_order=False, timeout=None, probe=None):
 
 
 def stat(probe):
-    '''
+    """
     Get stat about a running or finished k3jobq session.
     stat returned is in a dictionary like::
 
@@ -536,49 +506,47 @@ def stat(probe):
 
     Returns:
         dict of stat.
-    '''
+    """
 
-    with probe['probe_lock']:
+    with probe["probe_lock"]:
         rst = {
-            'in': probe['in'],
-            'out': probe['out'],
-            'doing': probe['in'] - probe['out'],
-            'workers': [],
+            "in": probe["in"],
+            "out": probe["out"],
+            "doing": probe["in"] - probe["out"],
+            "workers": [],
         }
 
     # exclude the _start and _end
-    for wg in probe['worker_groups'][:-1]:
+    for wg in probe["worker_groups"][:-1]:
         o = {}
         wk = wg.worker
-        o['name'] = (wk.__module__ or 'builtin') + ":" + wk.__name__
-        o['input'] = _q_stat(wg.input_queue)
+        o["name"] = (wk.__module__ or "builtin") + ":" + wk.__name__
+        o["input"] = _q_stat(wg.input_queue)
         if wg.dispatcher is not None:
-            o['dispatcher'] = [
-                {'input': _q_stat(qs['input']),
-                 'output': _q_stat(qs['output']),
-                 }
+            o["dispatcher"] = [
+                {
+                    "input": _q_stat(qs["input"]),
+                    "output": _q_stat(qs["output"]),
+                }
                 for qs in wg.dispatch_queues
             ]
 
         if wg.queue_of_output_q is not None:
-            o['coordinator'] = _q_stat(wg.queue_of_output_q)
+            o["coordinator"] = _q_stat(wg.queue_of_output_q)
 
         s, e = wg.running_index_range
-        o['nr_worker'] = e - s
+        o["nr_worker"] = e - s
 
-        rst['workers'].append(o)
+        rst["workers"].append(o)
 
     return rst
 
 
 def _q_stat(q):
-    return {'size': q.qsize(),
-            'capa': q.maxsize
-            }
+    return {"size": q.qsize(), "capa": q.maxsize}
 
 
 def _put_rst(output_q, rst):
-
     if isinstance(rst, types.GeneratorType):
         for rr in rst:
             _put_non_empty(output_q, rr)

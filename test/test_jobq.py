@@ -37,9 +37,7 @@ def sleep_5(args):
 
 
 class TestProbe(unittest.TestCase):
-
     def _start_jobq_in_thread(self, n_items, n_worker, keep_order=False):
-
         def _sleep_1(args):
             time.sleep(0.1)
             return args
@@ -48,110 +46,103 @@ class TestProbe(unittest.TestCase):
             return args
 
         probe = {}
-        th = threading.Thread(target=lambda: k3jobq.run(list(range(n_items)),
-                                                        [(_sleep_1, n_worker),
-                                                         _nothing],
-                                                        probe=probe,
-                                                        keep_order=keep_order,
-                                                        ))
+        th = threading.Thread(
+            target=lambda: k3jobq.run(
+                list(range(n_items)),
+                [(_sleep_1, n_worker), _nothing],
+                probe=probe,
+                keep_order=keep_order,
+            )
+        )
         th.daemon = True
         th.start()
 
         return th, probe
 
     def test_probe_single_thread(self):
-
         cases = (
-                (0.05, 1, '_sleep_1 is working on 1st'),
-                (0.1, 1, '_sleep_1 is working on 2nd'),
-                (0.2, 0, 'all done'),
+            (0.05, 1, "_sleep_1 is working on 1st"),
+            (0.1, 1, "_sleep_1 is working on 2nd"),
+            (0.2, 0, "all done"),
         )
 
         th, probe = self._start_jobq_in_thread(3, 1)
 
         for sleep_time, doing, case_mes in cases:
-
             time.sleep(sleep_time)
             stat = k3jobq.stat(probe)
 
-            self.assertEqual(doing, stat['doing'], case_mes)
+            self.assertEqual(doing, stat["doing"], case_mes)
 
             # qsize() is not reliable. do not test the value of it.
-            self.assertTrue(stat['workers'][0]['input']['size'] >= 0)
-            self.assertTrue(stat['workers'][0]['input']['capa'] >= 0)
+            self.assertTrue(stat["workers"][0]["input"]["size"] >= 0)
+            self.assertTrue(stat["workers"][0]["input"]["capa"] >= 0)
 
         # use the last stat
 
-        workers = stat['workers']
+        workers = stat["workers"]
         self.assertEqual(2, len(workers))
 
         w0 = workers[0]
-        self.assertEqual(True, w0['name'].endswith(':_sleep_1'))
-        self.assertEqual(0, w0['input']['size'])
-        self.assertEqual(True, w0['input']['capa'] > 0)
+        self.assertEqual(True, w0["name"].endswith(":_sleep_1"))
+        self.assertEqual(0, w0["input"]["size"])
+        self.assertEqual(True, w0["input"]["capa"] > 0)
 
         th.join()
 
     def test_probe_3_thread(self):
-
         cases = (
-                (0.05, 3, '_sleep_1 is working on 1st 3 items'),
-                (0.1, 3, '_sleep_1 is working on 2nd 3 items'),
-                (0.4, 0, 'all done'),
+            (0.05, 3, "_sleep_1 is working on 1st 3 items"),
+            (0.1, 3, "_sleep_1 is working on 2nd 3 items"),
+            (0.4, 0, "all done"),
         )
 
         th, probe = self._start_jobq_in_thread(10, 3)
 
         for sleep_time, doing, case_mes in cases:
-
             time.sleep(sleep_time)
             stat = k3jobq.stat(probe)
 
-            self.assertEqual(doing, stat['doing'], case_mes)
+            self.assertEqual(doing, stat["doing"], case_mes)
 
         # use the last stat
 
-        workers = stat['workers']
+        workers = stat["workers"]
         self.assertEqual(2, len(workers))
 
         th.join()
 
     def test_probe_3_thread_keep_order(self):
-
         cases = (
-                (0.05, 3, '_sleep_1 is working on 1st 3 items'),
-                (0.1, 3, '_sleep_1 is working on 2nd 3 items'),
-                (0.4, 0, 'all done'),
+            (0.05, 3, "_sleep_1 is working on 1st 3 items"),
+            (0.1, 3, "_sleep_1 is working on 2nd 3 items"),
+            (0.4, 0, "all done"),
         )
 
         th, probe = self._start_jobq_in_thread(10, 3, keep_order=True)
 
         for sleep_time, doing, case_mes in cases:
-
             time.sleep(sleep_time)
             stat = k3jobq.stat(probe)
 
-            self.assertEqual(doing, stat['doing'], case_mes)
+            self.assertEqual(doing, stat["doing"], case_mes)
 
         # use the last stat
 
-        workers = stat['workers']
+        workers = stat["workers"]
         self.assertEqual(2, len(workers))
 
         th.join()
 
 
 class TestDispatcher(unittest.TestCase):
-
     def test_dispatcher_job_manager(self):
-
         n_threads = 3
         n_numbers = 1000
         rst = {}
         ordered = []
 
         def _collect_by_tid(ii):
-
             tid = threading.current_thread().ident
             if tid not in rst:
                 rst[tid] = []
@@ -162,10 +153,12 @@ class TestDispatcher(unittest.TestCase):
         def _collect(ii):
             ordered.append(ii)
 
-        jm = k3jobq.JobManager([
-            (_collect_by_tid, n_threads, lambda x: x % n_threads),
-            (_collect, 1),
-        ])
+        jm = k3jobq.JobManager(
+            [
+                (_collect_by_tid, n_threads, lambda x: x % n_threads),
+                (_collect, 1),
+            ]
+        )
 
         # In dispatcher mode it does not allow to set thread_num to prevent out
         # of order output
@@ -177,12 +170,12 @@ class TestDispatcher(unittest.TestCase):
             st = jm.stat()
             dd(st)
 
-            self.assertIn('dispatcher', st['workers'][0])
-            dstat = st['workers'][0]['dispatcher']
+            self.assertIn("dispatcher", st["workers"][0])
+            dstat = st["workers"][0]["dispatcher"]
             self.assertEqual(n_threads, len(dstat))
             for ds in dstat:
-                self.assertIn('input', ds)
-                self.assertIn('output', ds)
+                self.assertIn("input", ds)
+                self.assertIn("output", ds)
 
         jm.join()
 
@@ -195,18 +188,15 @@ class TestDispatcher(unittest.TestCase):
                 self.assertEqual(m, i % n_threads)
 
         # with dispatcher, output are ordered
-        self.assertEqual([x for x in range(n_numbers)],
-                         ordered)
+        self.assertEqual([x for x in range(n_numbers)], ordered)
 
     def test_dispatcher_run(self):
-
         n_threads = 3
         n_numbers = 1000
         rst = {}
         ordered = []
 
         def _collect_by_tid(ii):
-
             tid = threading.current_thread().ident
             if tid not in rst:
                 rst[tid] = []
@@ -217,10 +207,13 @@ class TestDispatcher(unittest.TestCase):
         def _collect(ii):
             ordered.append(ii)
 
-        k3jobq.run(list(range(n_numbers)), [
-            (_collect_by_tid, n_threads, lambda x: x % n_threads),
-            (_collect, 1),
-        ])
+        k3jobq.run(
+            list(range(n_numbers)),
+            [
+                (_collect_by_tid, n_threads, lambda x: x % n_threads),
+                (_collect, 1),
+            ],
+        )
 
         self.assertEqual(n_threads, len(list(rst.keys())))
 
@@ -231,14 +224,11 @@ class TestDispatcher(unittest.TestCase):
                 self.assertEqual(m, i % n_threads)
 
         # with dispatcher, output are ordered
-        self.assertEqual([x for x in range(n_numbers)],
-                         ordered)
+        self.assertEqual([x for x in range(n_numbers)], ordered)
 
 
 class TestTimeout(unittest.TestCase):
-
     def test_timeout(self):
-
         def _sleep_1(args):
             sleep_got.append(args)
             time.sleep(0.1)
@@ -265,9 +255,7 @@ class TestTimeout(unittest.TestCase):
 
 
 class TestJobManager(unittest.TestCase):
-
     def test_manager(self):
-
         rst = []
 
         def _sleep(args):
@@ -291,7 +279,6 @@ class TestJobManager(unittest.TestCase):
         self.assertTrue(-0.05 < t1 - t0 - 0.3 < 0.05)
 
     def test_join_timeout(self):
-
         def _sleep(args):
             time.sleep(0.1)
 
@@ -308,28 +295,25 @@ class TestJobManager(unittest.TestCase):
         self.assertTrue(0.09 < t1 - t0 < 0.11)
 
     def test_stat(self):
-
         def _pass(args):
             return args
 
         jm = k3jobq.JobManager([_pass])
 
         for i in range(3):
-
             jm.put(i)
 
             time.sleep(0.01)
             st = jm.stat()
 
             # each element get in twice: _pass and _blackhole
-            self.assertEqual((i + 1) * 2, st['in'])
-            self.assertEqual((i + 1) * 2, st['out'])
-            self.assertEqual(0, st['doing'])
+            self.assertEqual((i + 1) * 2, st["in"])
+            self.assertEqual((i + 1) * 2, st["out"])
+            self.assertEqual(0, st["doing"])
 
         jm.join()
 
     def test_stat_on_builtin_method(self):
-
         rst = []
         jm = k3jobq.JobManager([rst.append])
 
@@ -342,7 +326,6 @@ class TestJobManager(unittest.TestCase):
         jm.join()
 
     def test_set_thread_num(self):
-
         def _pass(args):
             return args
 
@@ -351,12 +334,10 @@ class TestJobManager(unittest.TestCase):
         jm = k3jobq.JobManager([_pass, rst.append])
 
         for invalid in (0, -1, 1.1):
-            self.assertRaises(
-                AssertionError, jm.set_thread_num, _pass, invalid)
+            self.assertRaises(AssertionError, jm.set_thread_num, _pass, invalid)
 
         n = 10240
         for i in range(n):
-
             jm.put(i)
 
             # change thread number every 91 put
@@ -379,7 +360,6 @@ class TestJobManager(unittest.TestCase):
         """
 
         class X(object):
-
             def meth(self):
                 pass
 
@@ -388,18 +368,17 @@ class TestJobManager(unittest.TestCase):
         jm = k3jobq.JobManager([x.meth])
 
         before = jm.stat()
-        self.assertEqual(1, before['workers'][0]['nr_worker'])
+        self.assertEqual(1, before["workers"][0]["nr_worker"])
 
         # This should not raise JobWorkerNotFound.
         jm.set_thread_num(x.meth, 2)
 
         after = jm.stat()
-        self.assertEqual(2, after['workers'][0]['nr_worker'])
+        self.assertEqual(2, after["workers"][0]["nr_worker"])
 
         jm.join()
 
     def test_set_thread_num_keep_order(self):
-
         def _pass(args):
             return args
 
@@ -407,10 +386,10 @@ class TestJobManager(unittest.TestCase):
 
         jm = k3jobq.JobManager([_pass, rst.append], keep_order=True)
 
-        setter = {'running': True}
+        setter = {"running": True}
 
         def _change_thread_nr():
-            while setter['running']:
+            while setter["running"]:
                 jm.set_thread_num(_pass, random.randint(1, 4))
                 time.sleep(0.5)
 
@@ -429,24 +408,22 @@ class TestJobManager(unittest.TestCase):
         for i in range(n):
             self.assertEqual(i, rst[i])
 
-        setter['running'] = False
+        setter["running"] = False
 
         for th in ths:
             th.join()
 
 
 class TestJobQ(unittest.TestCase):
-
     def test_exception(self):
-
         # Add a handler, or python complains "no handler assigned
         # to...."
-        jl = logging.getLogger('pykit.k3jobq')
+        jl = logging.getLogger("pykit.k3jobq")
         jl.addHandler(logging.NullHandler())
 
         def err_on_even(args):
             if args % 2 == 0:
-                raise Exception('even number')
+                raise Exception("even number")
             else:
                 return args
 
@@ -461,15 +438,13 @@ class TestJobQ(unittest.TestCase):
         jl.handlers = []
 
     def test_sequential(self):
-
         cases = (
-                ([0, 1, 2], [add1], [1, 2, 3]),
-                ([0, 1, 2], [add1, multi2], [2, 4, 6]),
-                (list(range(3)), [add1, (multi2, 1)], [2, 4, 6]),
-                (list(range(100)), [add1, (multi2, 1), discard_even], []),
-                (list(range(100)), [add1, discard_even], list(range(1, 101, 2))),
-                (list(range(1024 * 10)), [add1, multi2],
-                 list(range(2, 1024 * 10 * 2 + 2, 2))),
+            ([0, 1, 2], [add1], [1, 2, 3]),
+            ([0, 1, 2], [add1, multi2], [2, 4, 6]),
+            (list(range(3)), [add1, (multi2, 1)], [2, 4, 6]),
+            (list(range(100)), [add1, (multi2, 1), discard_even], []),
+            (list(range(100)), [add1, discard_even], list(range(1, 101, 2))),
+            (list(range(1024 * 10)), [add1, multi2], list(range(2, 1024 * 10 * 2 + 2, 2))),
         )
 
         def collect(args):
@@ -481,17 +456,10 @@ class TestJobQ(unittest.TestCase):
             self.assertEqual(out, rst)
 
     def test_concurrent(self):
-
         cases = (
-                (list(range(100)), [add1, (multi2_sleep, 10)],
-                 list(range(2, 202, 2))
-                 ),
-                (list(range(100)), [add1, (multi2_sleep, 10)],
-                 list(range(2, 202, 2))
-                 ),
-                (list(range(1024 * 10)), [add1, (multi2, 4)],
-                 list(range(2, 1024 * 10 * 2 + 2, 2))
-                 ),
+            (list(range(100)), [add1, (multi2_sleep, 10)], list(range(2, 202, 2))),
+            (list(range(100)), [add1, (multi2_sleep, 10)], list(range(2, 202, 2))),
+            (list(range(1024 * 10)), [add1, (multi2, 4)], list(range(2, 1024 * 10 * 2 + 2, 2))),
         )
 
         def collect(args):
@@ -507,7 +475,6 @@ class TestJobQ(unittest.TestCase):
             self.assertEqual(out, rst)
 
     def test_generator(self):
-
         def gen(args):
             for i in range(3):
                 yield i
@@ -518,21 +485,17 @@ class TestJobQ(unittest.TestCase):
 
         rst = []
         k3jobq.run(list(range(3)), [(gen, 2), collect], keep_order=True)
-        self.assertEqual([0, 1, 2] * 3, rst,
-                         "generator should extract all before next")
+        self.assertEqual([0, 1, 2] * 3, rst, "generator should extract all before next")
 
         rst = []
         k3jobq.run(list(range(3)), [(gen, 2), collect], keep_order=False)
-        self.assertEqual(set([0, 1, 2]), set(rst),
-                         "generator should get all")
+        self.assertEqual(set([0, 1, 2]), set(rst), "generator should get all")
 
-        self.assertEqual(9, len(rst), 'nr of elts')
+        self.assertEqual(9, len(rst), "nr of elts")
 
 
 class TestDefaultTimeout(unittest.TestCase):
-
     def test_default_timeout_is_not_too_large(self):
-
         # Issue: threading.Thread.join does not accept a very large timeout
         # value
 
@@ -543,9 +506,7 @@ class TestDefaultTimeout(unittest.TestCase):
 
 
 class TestLimitJobSpeed(unittest.TestCase):
-
     def test_limit_job_speed(self):
-
         job_num = 300
         job_speed = 100
 
@@ -558,9 +519,12 @@ class TestLimitJobSpeed(unittest.TestCase):
 
         t0 = time.time()
 
-        k3jobq.run(entry_iter(), [
-            (k3jobq.limit_job_speed(job_speed, 1), 1),
-            (empty, 10),
-        ])
+        k3jobq.run(
+            entry_iter(),
+            [
+                (k3jobq.limit_job_speed(job_speed, 1), 1),
+                (empty, 10),
+            ],
+        )
 
         self.assertEqual(int(job_num / job_speed), int(time.time() - t0))
