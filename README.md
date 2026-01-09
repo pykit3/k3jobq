@@ -1,7 +1,6 @@
 # k3jobq
 
 [![Build Status](https://github.com/pykit3/k3jobq/actions/workflows/python-package.yml/badge.svg)](https://github.com/pykit3/k3jobq/actions/workflows/python-package.yml)
-![Python package](https://github.com/pykit3/k3jobq/workflows/Python%20package/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/k3jobq/badge/?version=stable)](https://k3jobq.readthedocs.io/en/stable/?badge=stable)
 [![Package](https://img.shields.io/pypi/pyversions/k3jobq)](https://pypi.org/project/k3jobq)
 
