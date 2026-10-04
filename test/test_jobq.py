@@ -4,9 +4,10 @@ import threading
 import time
 import unittest
 
-import k3jobq
 import k3thread
 import k3ut
+
+import k3jobq
 
 dd = k3ut.dd
 
@@ -359,7 +360,7 @@ class TestJobManager(unittest.TestCase):
         See https://stackoverflow.com/questions/15977808/why-dont-methods-have-reference-equality
         """
 
-        class X(object):
+        class X:
             def meth(self):
                 pass
 
@@ -423,7 +424,7 @@ class TestJobQ(unittest.TestCase):
 
         def err_on_even(args):
             if args % 2 == 0:
-                raise Exception("even number")
+                raise ValueError("even number")
             else:
                 return args
 
@@ -489,7 +490,7 @@ class TestJobQ(unittest.TestCase):
 
         rst = []
         k3jobq.run(list(range(3)), [(gen, 2), collect], keep_order=False)
-        self.assertEqual(set([0, 1, 2]), set(rst), "generator should get all")
+        self.assertEqual({0, 1, 2}, set(rst), "generator should get all")
 
         self.assertEqual(9, len(rst), "nr of elts")
 
@@ -511,8 +512,7 @@ class TestLimitJobSpeed(unittest.TestCase):
         job_speed = 100
 
         def entry_iter():
-            for ii in range(job_num):
-                yield ii
+            yield from range(job_num)
 
         def empty(num):
             pass

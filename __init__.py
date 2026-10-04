@@ -5,13 +5,12 @@ __version__ = version("k3jobq")
 from .jobq import (
     EmptyRst,
     Finish,
-    run,
-    stat,
     JobManager,
     JobWorkerError,
     JobWorkerNotFound,
+    run,
+    stat,
 )
-
 from .works import (
     limit_job_speed,
 )
@@ -19,10 +18,10 @@ from .works import (
 __all__ = [
     "EmptyRst",
     "Finish",
-    "run",
-    "stat",
     "JobManager",
     "JobWorkerError",
     "JobWorkerNotFound",
     "limit_job_speed",
+    "run",
+    "stat",
 ]

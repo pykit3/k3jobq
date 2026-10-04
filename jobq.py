@@ -1,16 +1,15 @@
 import logging
+import queue
 import threading
 import time
 import types
-import queue
 
 import k3thread
-
 
 logger = logging.getLogger(__name__)
 
 
-class EmptyRst(object):
+class EmptyRst:
     """
     A worker function return this value to cancel a task.
     By returning ``EmptyRst``, nothing is passed to next worker group::
@@ -22,7 +21,7 @@ class EmptyRst(object):
     """
 
 
-class Finish(object):
+class Finish:
     pass
 
 
@@ -34,7 +33,7 @@ class JobWorkerNotFound(JobWorkerError):
     pass
 
 
-class WorkerGroup(object):
+class WorkerGroup:
     def __init__(self, index, worker, n_thread, input_queue, dispatcher, probe, keep_order):
         self.index = index
         self.worker = worker
@@ -127,7 +126,7 @@ class WorkerGroup(object):
                 with self.worker_group_lock:
                     del self.threads[thread_index]
 
-                logger.info("worker-thread {i} quit".format(i=thread_index))
+                logger.info(f"worker-thread {thread_index} quit")
                 return
 
             args = input_q.get()
@@ -139,8 +138,8 @@ class WorkerGroup(object):
 
             try:
                 rst = self.worker(args)
-            except Exception as e:
-                logger.exception(repr(e))
+            except Exception:
+                logger.exception(f"worker-thread {thread_index} failed")
                 continue
 
             finally:
@@ -158,7 +157,7 @@ class WorkerGroup(object):
                 with self.worker_group_lock:
                     del self.threads[thread_index]
 
-                logger.info("in-order worker-thread {i} quit".format(i=thread_index))
+                logger.info(f"in-order worker-thread {thread_index} quit")
                 return
 
             with self.keep_order_lock:
@@ -173,8 +172,8 @@ class WorkerGroup(object):
             try:
                 rst = self.worker(args)
 
-            except Exception as e:
-                logger.exception(repr(e))
+            except Exception:
+                logger.exception(f"in-order worker-thread {thread_index} failed")
                 output_q.put(EmptyRst)
                 continue
 
@@ -208,7 +207,7 @@ class WorkerGroup(object):
             inq.put(args)
 
 
-class JobManager(object):
+class JobManager:
     """
     JobManager is the internal impl of ``run`` and let user separate worker
     management and input management. E.g., ``run(range(3), [_echo])`` is same as::
@@ -339,13 +338,9 @@ class JobManager(object):
                 wg.running_index_range = [s, e]
                 wg.add_worker_thread()
 
-                logger.info(
-                    "thread number is set to {n}, thread index: {idx}, running threads: {ths}".format(
-                        n=n,
-                        idx=list(range(wg.running_index_range[0], wg.running_index_range[1])),
-                        ths=sorted(wg.threads.keys()),
-                    )
-                )
+                idx = list(range(wg.running_index_range[0], wg.running_index_range[1]))
+                ths = sorted(wg.threads.keys())
+                logger.info(f"thread number is set to {n}, thread index: {idx}, running threads: {ths}")
                 break
 
         else:

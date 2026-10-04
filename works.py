@@ -60,8 +60,8 @@ def limit_job_speed(max_job_speed, job_step=1):
                 speed_stat["start_time"] = now
                 speed_stat["job_num"] = 0
 
-        except Exception as e:
-            logger.exception("error occurred limit job speed: " + repr(e))
+        except Exception:
+            logger.exception("error occurred limit job speed")
 
         return job_args
 

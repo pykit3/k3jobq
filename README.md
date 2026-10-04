@@ -35,7 +35,6 @@ pip install k3jobq
 # Synopsis
 
 ```python
-
 #!/usr/bin/env python
 
 import k3jobq
@@ -82,15 +81,13 @@ if __name__ == "__main__":
     # Multiple threads with order kept:
 
     # keep_order=True to force to keep order even with concurrently running.
-    k3jobq.run(list(range(3)), [add1, (multi2, 2), printarg],
-               keep_order=True)
+    k3jobq.run(list(range(3)), [add1, (multi2, 2), printarg], keep_order=True)
     # > 2
     # > 4
     # > 6
 
     # timeout=0.5 specifies that it runs at most 0.5 second.
-    k3jobq.run(list(range(3)), [add1, (multi2, 2), printarg],
-               timeout=0.5)
+    k3jobq.run(list(range(3)), [add1, (multi2, 2), printarg], timeout=0.5)
 
     # Returning *k3jobq.EmptyRst* stops delivering result to next job:
 
@@ -106,7 +103,6 @@ if __name__ == "__main__":
     # > 5
     # > 7
     # > 9
-
 ```
 
 #   Author

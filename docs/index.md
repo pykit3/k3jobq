@@ -19,11 +19,14 @@ pip install k3jobq
 ```python
 import k3jobq
 
+
 def add1(args):
     return args + 1
 
+
 def printarg(args):
     print(args)
+
 
 # Process inputs through worker pipeline
 k3jobq.run([0, 1, 2], [add1, printarg])
