@@ -298,8 +298,10 @@ class JobManager:
                 the job they are doing.
         """
 
-        assert n > 0
-        assert isinstance(n, int)
+        if not isinstance(n, int):
+            raise TypeError(f"thread number must be int, but: {n!r}")
+        if n <= 0:
+            raise ValueError(f"thread number must be positive, but: {n!r}")
 
         for wg in self.worker_groups:
             """

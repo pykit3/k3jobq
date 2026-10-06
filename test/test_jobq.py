@@ -334,8 +334,14 @@ class TestJobManager(unittest.TestCase):
 
         jm = k3jobq.JobManager([_pass, rst.append])
 
-        for invalid in (0, -1, 1.1):
-            self.assertRaises(AssertionError, jm.set_thread_num, _pass, invalid)
+        cases = (
+            (0, ValueError),
+            (-1, ValueError),
+            (1.1, TypeError),
+            ("2", TypeError),
+        )
+        for invalid, err in cases:
+            self.assertRaises(err, jm.set_thread_num, _pass, invalid)
 
         n = 10240
         for i in range(n):
