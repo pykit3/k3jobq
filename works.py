@@ -22,7 +22,7 @@ def limit_job_speed(max_job_speed, job_step=1):
         job_step(int): represents the step length of a job, the default is 1.
 
     Returns:
-        the ``args`` passed in.
+        (callable): a worker function that returns the ``args`` passed to it.
     """
 
     speed_stat = {

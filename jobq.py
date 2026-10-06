@@ -296,9 +296,6 @@ class JobManager:
                 New threads are created and started before this function returns.
                 The threads that will be removed are removed after they finishes
                 the job they are doing.
-
-        Returns:
-            None
         """
 
         assert n > 0
@@ -358,9 +355,6 @@ class JobManager:
 
         Args:
             timeout(float): is the same as `k3jobq.run`
-
-        Returns:
-            None
         """
 
         endtime = time.time() + (timeout or 86400 * 365)
@@ -461,9 +455,6 @@ def run(input_it, workers, keep_order=False, timeout=None, probe=None):
         probe: is a dictionary to collect stats. By defaul it is ``None``.
             If it is a valid dictionary, ``k3jobq`` writes stats of running jobs to it.
             ``k3jobq.stat()`` can be used to obtain stat data.
-
-    Returns:
-        None
     """
 
     mgr = JobManager(workers, probe=probe, keep_order=keep_order)
@@ -500,7 +491,7 @@ def stat(probe):
         probe(dict): is the dictionary passed into ``k3jobq.run``.
 
     Returns:
-        dict of stat.
+        (dict): the stat in the form shown above.
     """
 
     with probe["probe_lock"]:
