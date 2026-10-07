@@ -1,5 +1,5 @@
 """
-k3jobq is a manager to create cuncurrent tasks.
+k3jobq is a manager to create concurrent tasks.
 It processes a series of inputs with functions concurrently and
 return once all threads are done::
 

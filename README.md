@@ -9,7 +9,7 @@ k3jobq processes a series of inputs with functions concurrently
 k3jobq is a component of [pykit3] project: a python3 toolkit set.
 
 
-k3jobq is a manager to create cuncurrent tasks.
+k3jobq is a manager to create concurrent tasks.
 It processes a series of inputs with functions concurrently and
 return once all threads are done::
 

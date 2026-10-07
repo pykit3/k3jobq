@@ -71,7 +71,7 @@ class WorkerGroup:
             # to maximize concurrency
             self.queue_of_output_q = _make_q(n=1024 * 1024)
 
-            # Protect input.get() and ouput.put(), only used by non-dispatcher
+            # Protect input.get() and output.put(), only used by non-dispatcher
             # mode
             self.keep_order_lock = threading.RLock()
 
@@ -304,7 +304,7 @@ class JobManager:
 
         for wg in self.worker_groups:
             """
-            In python2, `x = X(); x.meth is x.meth` results in a `False`.
+            `x = X(); x.meth is x.meth` results in a `False`.
             Every time to retrieve a method, python creates a new **bound** function.
 
             We must use == to test function equality.
@@ -430,7 +430,7 @@ def run(input_it, workers, keep_order=False, timeout=None, probe=None):
                 def dispatch(args):
                     return hash(args) % 5
 
-            A user-defined dipatcher is used when **concurrency** and **partial-order**
+            A user-defined dispatcher is used when **concurrency** and **partial-order**
             are both required:
 
             -   The ``args`` passed to a same worker is guaranteed to be
@@ -452,7 +452,7 @@ def run(input_it, workers, keep_order=False, timeout=None, probe=None):
             If k3jobq exceeds ``timeout`` before finishing, it returns after all workers
             finishing their current job.
 
-        probe(dict): is a dictionary to collect stats. By defaul it is ``None``.
+        probe(dict): is a dictionary to collect stats. By default it is ``None``.
             If it is a valid dictionary, ``k3jobq`` writes stats of running jobs to it.
             ``k3jobq.stat()`` can be used to obtain stat data.
     """
