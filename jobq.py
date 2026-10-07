@@ -285,8 +285,7 @@ class JobManager:
         index range ``running_index_range``.
 
         Args:
-
-            worker:
+            worker(callable):
                 is the callable passed in when creating JobManager.
                 It searches in job manager for the worker.
                 If there is not such a worker ``is`` the one passed in, it raise a
@@ -395,13 +394,12 @@ class JobManager:
 
 def run(input_it, workers, keep_order=False, timeout=None, probe=None):
     """
-    Process element in ``input`` one by one with functions in ``workers``.
+    Process element in ``input_it`` one by one with functions in ``workers``.
 
     Args:
+        input_it(iterable): input elts to process.
 
-        input(iterable): input elts to process.
-
-        workers: list of functions, or ``tuple`` of ``(function, nr_of_thread)``,
+        workers(list): list of functions, or ``tuple`` of ``(function, nr_of_thread)``,
             or ``tuple`` of ``(function, nr_of_thread, dispatcher_func)``.
 
             A worker function accepts exactly one argument and return one value.
@@ -454,7 +452,7 @@ def run(input_it, workers, keep_order=False, timeout=None, probe=None):
             If k3jobq exceeds ``timeout`` before finishing, it returns after all workers
             finishing their current job.
 
-        probe: is a dictionary to collect stats. By defaul it is ``None``.
+        probe(dict): is a dictionary to collect stats. By defaul it is ``None``.
             If it is a valid dictionary, ``k3jobq`` writes stats of running jobs to it.
             ``k3jobq.stat()`` can be used to obtain stat data.
     """
