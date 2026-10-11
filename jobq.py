@@ -369,20 +369,20 @@ class JobManager:
             if wg.dispatcher is None:
                 # put nr = len(threads) Finish
                 for th in ths:
-                    wg.input_queue.put(Finish)
+                    _put_before(wg.input_queue, Finish, endtime)
             else:
-                wg.input_queue.put(Finish)
+                _put_before(wg.input_queue, Finish, endtime)
                 # wait for dispatcher to finish or jobs might be lost
                 wg.dispatcher_thread.join(endtime - time.time())
 
                 for qs in wg.dispatch_queues:
-                    qs["input"].put(Finish)
+                    _put_before(qs["input"], Finish, endtime)
 
             for th in ths:
                 th.join(endtime - time.time())
 
             if wg.queue_of_output_q is not None:
-                wg.queue_of_output_q.put(Finish)
+                _put_before(wg.queue_of_output_q, Finish, endtime)
                 wg.coordinator_thread.join(endtime - time.time())
 
             # if join timeout, let threads quit at next loop
@@ -538,6 +538,15 @@ def _put_rst(output_q, rst):
             _put_non_empty(output_q, rr)
     else:
         _put_non_empty(output_q, rst)
+
+
+def _put_before(q, val, endtime):
+    # A queue that stays full until endtime means join() timed out. The threads
+    # then quit at their next loop, because join() clears wg.running.
+    try:
+        q.put(val, timeout=max(endtime - time.time(), 0))
+    except queue.Full:
+        pass
 
 
 def _blackhole(args):

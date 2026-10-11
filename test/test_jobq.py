@@ -295,6 +295,28 @@ class TestJobManager(unittest.TestCase):
 
         self.assertTrue(0.09 < t1 - t0 < 0.11)
 
+    def test_join_timeout_full_queue(self):
+        # join() must not wait past its timeout to put a Finish into a full queue.
+        started = threading.Event()
+        release = threading.Event()
+
+        def _blocked(args):
+            started.set()
+            release.wait()
+
+        jm = k3jobq.JobManager([_blocked], queue_size=1)
+        jm.put(1)
+        started.wait()
+        jm.put(2)
+
+        th = threading.Thread(target=jm.join, kwargs={"timeout": 0.1}, daemon=True)
+        th.start()
+        th.join(1)
+        joined = not th.is_alive()
+
+        release.set()
+        self.assertTrue(joined)
+
     def test_stat(self):
         def _pass(args):
             return args
