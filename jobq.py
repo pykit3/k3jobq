@@ -361,7 +361,7 @@ class JobManager:
         if timeout is None:
             timeout = 86400 * 365
 
-        endtime = time.time() + timeout
+        endtime = time.monotonic() + timeout
 
         for wg in self.worker_groups:
             with wg.worker_group_lock:
@@ -376,17 +376,17 @@ class JobManager:
             else:
                 _put_before(wg.input_queue, Finish, endtime)
                 # wait for dispatcher to finish or jobs might be lost
-                wg.dispatcher_thread.join(endtime - time.time())
+                wg.dispatcher_thread.join(endtime - time.monotonic())
 
                 for qs in wg.dispatch_queues:
                     _put_before(qs["input"], Finish, endtime)
 
             for th in ths:
-                th.join(endtime - time.time())
+                th.join(endtime - time.monotonic())
 
             if wg.queue_of_output_q is not None:
                 _put_before(wg.queue_of_output_q, Finish, endtime)
-                wg.coordinator_thread.join(endtime - time.time())
+                wg.coordinator_thread.join(endtime - time.monotonic())
 
             # if join timeout, let threads quit at next loop
             wg.running = False
@@ -547,7 +547,7 @@ def _put_before(q, val, endtime):
     # A queue that stays full until endtime means join() timed out. The threads
     # then quit at their next loop, because join() clears wg.running.
     try:
-        q.put(val, timeout=max(endtime - time.time(), 0))
+        q.put(val, timeout=max(endtime - time.monotonic(), 0))
     except queue.Full:
         pass
 
