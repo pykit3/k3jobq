@@ -338,6 +338,39 @@ class TestJobManager(unittest.TestCase):
         release.set()
         self.assertTrue(joined)
 
+    def test_join_timeout_full_dispatch_queue(self):
+        # join() must not wait past its timeout on the full queue of a dispatched worker thread,
+        # and must leave the queued jobs in place.
+        started = threading.Event()
+        release = threading.Event()
+
+        def _blocked(args):
+            started.set()
+            release.wait()
+
+        jm = k3jobq.JobManager([(_blocked, 1, lambda args: 0)], queue_size=1)
+        jm.put(0)
+        started.wait()
+        # Jobs 1 to 1024 fill the dispatch queue, the dispatcher holds 1025, and 1026 fills the input queue.
+        for i in range(1, 1027):
+            jm.put(i)
+
+        th = threading.Thread(target=jm.join, kwargs={"timeout": 0.1}, daemon=True)
+        t0 = time.time()
+        th.start()
+        th.join(1)
+        elapsed = time.time() - t0
+        joined = not th.is_alive()
+        st = jm.stat()
+
+        release.set()
+        self.assertTrue(joined)
+        self.assertGreater(elapsed, 0.09)
+        self.assertEqual(1, st["in"])
+        self.assertEqual(0, st["out"])
+        self.assertEqual({"size": 1, "capa": 1}, st["workers"][0]["input"])
+        self.assertEqual({"size": 1024, "capa": 1024}, st["workers"][0]["dispatcher"][0]["input"])
+
     def test_stat(self):
         def _pass(args):
             return args
