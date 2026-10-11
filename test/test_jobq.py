@@ -317,6 +317,27 @@ class TestJobManager(unittest.TestCase):
         release.set()
         self.assertTrue(joined)
 
+    def test_join_zero_timeout(self):
+        # A zero timeout returns at once, even while a worker is busy.
+        started = threading.Event()
+        release = threading.Event()
+
+        def _blocked(args):
+            started.set()
+            release.wait()
+
+        jm = k3jobq.JobManager([_blocked])
+        jm.put(1)
+        started.wait()
+
+        th = threading.Thread(target=jm.join, kwargs={"timeout": 0}, daemon=True)
+        th.start()
+        th.join(1)
+        joined = not th.is_alive()
+
+        release.set()
+        self.assertTrue(joined)
+
     def test_stat(self):
         def _pass(args):
             return args

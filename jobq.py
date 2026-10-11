@@ -358,7 +358,10 @@ class JobManager:
             timeout(float): is the same as `k3jobq.run`
         """
 
-        endtime = time.time() + (timeout or 86400 * 365)
+        if timeout is None:
+            timeout = 86400 * 365
+
+        endtime = time.time() + timeout
 
         for wg in self.worker_groups:
             with wg.worker_group_lock:
