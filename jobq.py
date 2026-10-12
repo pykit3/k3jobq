@@ -138,6 +138,11 @@ class WorkerGroup:
 
             try:
                 rst = self.worker(args)
+
+                # If rst is an iterator, it procures more than one args to next job.
+                # In order to be accurate, we only count an iterator as one.
+                # A generator runs only while it is iterated, so _put_rst() raises its errors.
+                _put_rst(output_q, rst)
             except Exception:
                 logger.exception(f"worker-thread {thread_index} failed")
                 continue
@@ -145,11 +150,6 @@ class WorkerGroup:
             finally:
                 with self.probe["probe_lock"]:
                     self.probe["out"] += 1
-
-            # If rst is an iterator, it procures more than one args to next job.
-            # In order to be accurate, we only count an iterator as one.
-
-            _put_rst(output_q, rst)
 
     def _exec_in_order(self, input_q, output_q, thread_index):
         while self.running:
@@ -189,7 +189,13 @@ class WorkerGroup:
             if outq is Finish:
                 return
 
-            _put_rst(self.output_queue, outq.get())
+            rst = outq.get()
+
+            # In keep_order mode, a generator that a worker returns runs here.
+            try:
+                _put_rst(self.output_queue, rst)
+            except Exception:
+                logger.exception("coordinator-thread failed")
 
     def _dispatch(self):
         while self.running:

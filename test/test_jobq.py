@@ -576,6 +576,17 @@ class TestJobQ(unittest.TestCase):
 
         self.assertEqual(9, len(rst), "nr of elts")
 
+    def test_generator_raises(self):
+        def gen(args):
+            yield args
+            if args == 1:
+                raise ValueError("boom")
+
+        for keep_order in (False, True):
+            rst = []
+            k3jobq.run(range(10), [gen, rst.append], keep_order=keep_order)
+            self.assertEqual(list(range(10)), rst)
+
 
 class TestDefaultTimeout(unittest.TestCase):
     def test_default_timeout_is_not_too_large(self):
