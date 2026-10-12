@@ -227,6 +227,12 @@ class TestDispatcher(unittest.TestCase):
         # with dispatcher, output are ordered
         self.assertEqual([x for x in range(n_numbers)], ordered)
 
+    def test_dispatcher_with_keep_order(self):
+        rst = []
+        # The timeout makes a hang fail this test instead of blocking it.
+        k3jobq.run(range(10), [(lambda a: a, 2, lambda a: a), rst.append], keep_order=True, timeout=5)
+        self.assertEqual(list(range(10)), rst)
+
     def test_dispatcher_raises(self):
         def dispatch(args):
             if args == 1:

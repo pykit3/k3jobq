@@ -105,7 +105,7 @@ class WorkerGroup:
 
             for i in range(s, e):
                 if i not in self.threads:
-                    if self.keep_order:
+                    if self.keep_order and self.dispatcher is None:
                         th = start_thread(self._exec_in_order, self.input_queue, _make_q(), i)
                     elif self.dispatcher is not None:
                         # for worker group with dispatcher, threads are added for the first time
