@@ -203,8 +203,12 @@ class WorkerGroup:
             if args is Finish:
                 return
 
-            n = self.dispatcher(args)
-            n = n % self.n_thread
+            try:
+                n = self.dispatcher(args)
+                n = n % self.n_thread
+            except Exception:
+                logger.exception("dispatcher-thread failed")
+                continue
 
             queues = self.dispatch_queues[n]
             inq, outq = queues["input"], queues["output"]

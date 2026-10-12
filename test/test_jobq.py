@@ -227,6 +227,16 @@ class TestDispatcher(unittest.TestCase):
         # with dispatcher, output are ordered
         self.assertEqual([x for x in range(n_numbers)], ordered)
 
+    def test_dispatcher_raises(self):
+        def dispatch(args):
+            if args == 1:
+                raise ValueError("boom")
+            return args
+
+        rst = []
+        k3jobq.run(range(10), [(lambda a: a, 2, dispatch), rst.append])
+        self.assertEqual([0, 2, 3, 4, 5, 6, 7, 8, 9], rst)
+
 
 class TestTimeout(unittest.TestCase):
     def test_timeout(self):
