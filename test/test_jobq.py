@@ -478,6 +478,22 @@ class TestJobManager(unittest.TestCase):
         for i in range(n):
             self.assertEqual(i, rst[i])
 
+    def test_invalid_thread_num(self):
+        def _pass(args):
+            return args
+
+        cases = (
+            (0, ValueError),
+            (-1, ValueError),
+            (1.1, TypeError),
+        )
+        for invalid, err in cases:
+            before = set(threading.enumerate())
+            # The first worker group is valid, so a late check would leave its threads running.
+            self.assertRaises(err, k3jobq.run, range(3), [_pass, (_pass, invalid), _pass])
+            started = set(threading.enumerate()) - before
+            self.assertEqual(set(), started, repr(invalid))
+
     def test_set_thread_num_with_object_method(self):
         """
         In python2, `x = X(); x.meth is x.meth` results in a `False`.

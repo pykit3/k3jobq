@@ -270,15 +270,19 @@ class JobManager:
         inq = self.head_queue
 
         workers = self.workers + [_blackhole]
-        for i, worker in enumerate(workers):
+        # Check every thread number before any worker group starts its threads.
+        specs = []
+        for worker in workers:
             if callable(worker):
                 worker = (worker, 1)
 
             # worker callable, n_thread, dispatcher
             worker = (worker + (None,))[:3]
 
-            worker, n, dispatcher = worker
+            _check_thread_num(worker[1])
+            specs.append(worker)
 
+        for i, (worker, n, dispatcher) in enumerate(specs):
             wg = WorkerGroup(i, worker, n, inq, dispatcher, self.probe, self.keep_order)
 
             self.worker_groups.append(wg)
@@ -313,10 +317,7 @@ class JobManager:
                 the job they are doing.
         """
 
-        if not isinstance(n, int):
-            raise TypeError(f"thread number must be int, but: {n!r}")
-        if n <= 0:
-            raise ValueError(f"thread number must be positive, but: {n!r}")
+        _check_thread_num(n)
 
         for wg in self.worker_groups:
             """
@@ -420,6 +421,8 @@ def run(input_it, workers, keep_order=False, timeout=None, probe=None):
 
         workers(list): list of functions, or ``tuple`` of ``(function, nr_of_thread)``,
             or ``tuple`` of ``(function, nr_of_thread, dispatcher_func)``.
+            ``nr_of_thread`` must be a positive ``int``, or ``run()`` raises
+            ``ValueError`` or ``TypeError`` before it starts any thread.
 
             A worker function accepts exactly one argument and return one value.
             The argument is one elt from input(the first worker) or a result
@@ -579,6 +582,13 @@ def _put_non_empty(q, val):
 
 def _make_q(n=1024):
     return queue.Queue(n)
+
+
+def _check_thread_num(n: object) -> None:
+    if not isinstance(n, int):
+        raise TypeError(f"thread number must be int, but: {n!r}")
+    if n <= 0:
+        raise ValueError(f"thread number must be positive, but: {n!r}")
 
 
 def start_thread(exec_func, *args):
