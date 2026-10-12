@@ -112,7 +112,7 @@ class WorkerGroup:
                         assert s == 0
                         assert e == self.n_thread
                         th = start_thread(
-                            self._exec, self.dispatch_queues[i]["input"], self.dispatch_queues[i]["output"], i
+                            self._exec_in_order, self.dispatch_queues[i]["input"], self.dispatch_queues[i]["output"], i
                         )
                     else:
                         th = start_thread(self._exec, self.input_queue, self.output_queue, i)
@@ -160,11 +160,17 @@ class WorkerGroup:
                 logger.info(f"in-order worker-thread {thread_index} quit")
                 return
 
-            with self.keep_order_lock:
+            if self.dispatcher is not None:
+                # _dispatch() has queued output_q for this job.
                 args = input_q.get()
-                if args is Finish:
-                    return
-                self.queue_of_output_q.put(output_q)
+            else:
+                with self.keep_order_lock:
+                    args = input_q.get()
+                    if args is not Finish:
+                        self.queue_of_output_q.put(output_q)
+
+            if args is Finish:
+                return
 
             with self.probe["probe_lock"]:
                 self.probe["in"] += 1

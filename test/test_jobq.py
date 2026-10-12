@@ -237,6 +237,34 @@ class TestDispatcher(unittest.TestCase):
         k3jobq.run(range(10), [(lambda a: a, 2, dispatch), rst.append])
         self.assertEqual([0, 2, 3, 4, 5, 6, 7, 8, 9], rst)
 
+    def test_worker_result_count(self):
+        # The coordinator reads one result per job, whatever the worker returns or raises.
+        def raise_on_1(args):
+            if args == 1:
+                raise ValueError("boom")
+            return args
+
+        def empty_on_1(args):
+            if args == 1:
+                return k3jobq.EmptyRst
+            return args
+
+        def twice(args):
+            yield args
+            yield args
+
+        cases = (
+            (raise_on_1, [0, 2, 3, 4, 5, 6, 7, 8, 9]),
+            (empty_on_1, [0, 2, 3, 4, 5, 6, 7, 8, 9]),
+            (twice, [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9]),
+        )
+
+        for worker, expected in cases:
+            rst = []
+            # The timeout makes a hang fail this test instead of blocking it.
+            k3jobq.run(range(10), [(worker, 2, lambda a: a), rst.append], timeout=5)
+            self.assertEqual(expected, rst, worker.__name__)
+
 
 class TestTimeout(unittest.TestCase):
     def test_timeout(self):
